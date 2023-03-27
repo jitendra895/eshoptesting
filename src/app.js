@@ -9,8 +9,7 @@ const users = require("./models/users");
 const sellers = require("./models/sellers");
 const shops = require("./models/shops");
 const products = require("./models/products");
-const Image = require("./models/img");
-const fs = require("fs");
+
 app.use("/src/uploads", express.static("src/uploads"));
 // const mongoose = require("mongoose");
 
