@@ -9,8 +9,13 @@ const users = require("./models/users");
 const sellers = require("./models/sellers");
 const shops = require("./models/shops");
 const products = require("./models/products");
-const storage = multer.memoryStorage()
-const upload = multer({ storage: storage });
+const Image = require("./models/img");
+const fs = require("fs");
+app.use("/src/uploads", express.static("src/uploads"));
+// const mongoose = require("mongoose");
+
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage: storage });
 
 app.use(express.json());
 app.use(cors());
@@ -88,29 +93,37 @@ app.post("/userLogin", async (req, res) => {
   }
 });
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "src/uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
 app.post("/products", upload.single("image"), async (req, res) => {
   try {
-    // if (!req.file) {
-    //   res.json({
-    //     success: false,
-    //     message: "You must provide at least 1 file",
-    //   });
-    // } else {
-      let imageUploadObject = {
-        image: {
-          data: req.file.buffer,
-          contentType: req.file.mimetype,
-        },
-        productName: req.body.productName,
-        price: req.body.price,
-        quantity: req.body.quantity,
-        description: req.body.description,
-        others: req.body.others,
-      };
-      const uploadObject = new products(imageUploadObject);
-      const uploadProcess = await uploadObject.save();
-      res.status(200).send(uploadProcess);
-    // }
+    const imageUrl =
+      req.protocol +
+      "://" +
+      req.get("host") +
+      "/src/uploads/" +
+      req.file.filename;
+    let imageUploadObject = {
+      image: imageUrl,
+      shopName: req.body.shopName,
+      productName: req.body.productName,
+      price: req.body.price,
+      quantity: req.body.quantity,
+      description: req.body.description,
+      others: req.body.others,
+    };
+    const uploadObject = new products(imageUploadObject);
+    const uploadProcess = await uploadObject.save();
+    res.status(200).send(uploadProcess);
   } catch (error) {
     console.error(error);
     res.status(500).send("Server Error");
@@ -131,13 +144,14 @@ app.get("/seller/:email", async (req, res) => {
   }
 });
 
-app.get("/product", async (req, res) => {
+app.get("/product/:shopName", async (req, res) => {
+  const shopName = req.params.shopName;
   try {
-    const user = await products.find({});
-    if (!user) {
-      res.status(404).send();
+    const productsList = await products.find({ shopName });
+    if (productsList.length === 0) {
+      res.status(404).json({ message: "no products found" });
     } else {
-      res.status(200).send(user);
+      res.status(200).send(productsList);
     }
   } catch (e) {
     res.status(500).send();
