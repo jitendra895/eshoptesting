@@ -12,7 +12,7 @@ const MongoClient = require("mongodb").MongoClient;
 const upload = require("./middleware/upload");
 const url =
   "mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority";
-const baseUrl = "https://ill-cyan-springbok-coat.cyclic.app/";
+const baseUrl = "https://ill-cyan-springbok-coat.cyclic.app/images/";
 const mongoClient = new MongoClient(url);
 const GridFSBucket = require("mongodb").GridFSBucket;
 
