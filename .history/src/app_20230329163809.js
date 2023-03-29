@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const multer = require("multer");
 require("./db/connection");
 const app = express();
 var cors = require("cors");
@@ -10,17 +11,16 @@ const shops = require("./models/shops");
 const products = require("./models/products");
 const MongoClient = require("mongodb").MongoClient;
 const upload = require("./middleware/upload");
-const url =
-  "mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority";
-const baseUrl = "https://ill-cyan-springbok-coat.cyclic.app/";
+const url = 'mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority';
+const baseUrl = "http://localhost:4000/images/";
 const mongoClient = new MongoClient(url);
+app.use("/src/uploads", express.static("src/uploads"));
 const GridFSBucket = require("mongodb").GridFSBucket;
 
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, "../build")));
 
-//api code for seller signup 
 app.post("/sellerSignup", async (req, res) => {
   try {
     const updateNewSeller = new sellers(req.body);
@@ -32,7 +32,6 @@ app.post("/sellerSignup", async (req, res) => {
   }
 });
 
-//api code for user signup 
 app.post("/userSingup", async (req, res) => {
   try {
     const updateNewUser = new users(req.body);
@@ -44,7 +43,6 @@ app.post("/userSingup", async (req, res) => {
   }
 });
 
-//api code for seller's shops status update
 app.post("/shop", async (req, res) => {
   try {
     const existingShop = await shops.findOne({ shopName: req.body.shopName });
@@ -63,8 +61,6 @@ app.post("/shop", async (req, res) => {
   }
 });
 
-
-//api code for seller Login
 app.post("/sellerLogin", async (req, res) => {
   try {
     const user = await sellers.findOne({ email: req.body.email });
@@ -80,7 +76,6 @@ app.post("/sellerLogin", async (req, res) => {
   }
 });
 
-//api code for user Login
 app.post("/userLogin", async (req, res) => {
   try {
     const user = await users.findOne({ email: req.body.email });
@@ -98,12 +93,23 @@ app.post("/userLogin", async (req, res) => {
   }
 });
 
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "src/uploads");
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + "-" + file.originalname);
+//   },
+// });
 
-//api code for adding products
+// const upload = multer({ storage: storage });
+
 app.post("/products", async (req, res) => {
   try {
-    await upload(req, res);
-    const imageUrl = baseUrl + req.file.filename;
+    
+       await upload(req, res);
+       const imageUrl = baseUrl +
+      req.file.filename;
     let imageUploadObject = {
       image: imageUrl,
       shopName: req.body.shopName,
@@ -122,7 +128,6 @@ app.post("/products", async (req, res) => {
   }
 });
 
-//api code for seller details
 app.get("/seller/:email", async (req, res) => {
   const email = req.params.email;
   try {
@@ -137,7 +142,6 @@ app.get("/seller/:email", async (req, res) => {
   }
 });
 
-//api code for perticular shop's products
 app.get("/product/:shopName", async (req, res) => {
   const shopName = req.params.shopName;
   try {
@@ -152,8 +156,62 @@ app.get("/product/:shopName", async (req, res) => {
   }
 });
 
-//api code for download the images 
-app.get("/images/:name", async (req, res) => {
+
+
+// app.post('/upload', async (req, res) => {
+//   try {
+//     await upload(req, res);
+//     console.log(req.file);
+
+//     if (req.file == undefined) {
+//       return res.send({
+//         message: "You must select a file.",
+//       });
+//     }
+
+//     return res.send({
+//       message: "File has been uploaded.",
+//     });
+//   } catch (error) {
+//     console.log(error);
+
+//     return res.send({
+//       message: "Error when trying upload image: ${error}",
+//     });
+//   }
+// });
+
+app.get('/images', async (req, res) => {
+  try {
+    const client =  await mongoClient.connect();
+    const database = client.db("test");
+    const images = database.collection("photos.files");
+
+    const cursor = images.find({});
+
+    if ((await cursor.count()) === 0) {
+      return res.status(500).send({
+        message: "No files found!",
+      });
+    }
+
+    let fileInfos = [];
+    await cursor.forEach((doc) => {
+      fileInfos.push({
+        name: doc.filename,
+        url: baseUrl + doc.filename,
+      });
+    });
+
+    return res.status(200).send(fileInfos);
+  } catch (error) {
+    return res.status(500).send({
+      message: error.message,
+    });
+  }
+});
+
+app.get('/images/:name', async (req, res) => {
   try {
     await mongoClient.connect();
 
@@ -181,6 +239,7 @@ app.get("/images/:name", async (req, res) => {
     });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`connection is live on ${port}`);
