@@ -137,19 +137,6 @@ app.get("/seller/:email", async (req, res) => {
   }
 });
 
-app.get("/user/:email", async (req, res) => {
-  const email = req.params.email;
-  try {
-    const user = await users.findOne({ email });
-    if (!user) {
-      res.status(404).send({ message: "No user found" });
-    } else {
-      res.status(200).send(user);
-    }
-  } catch (e) {
-    res.status(500).send({ message: "No user found" });
-  }
-});
 //api code for perticular shop's products
 app.get("/product/:shopName", async (req, res) => {
   const shopName = req.params.shopName;
@@ -215,8 +202,7 @@ app.get("/images/:name", async (req, res) => {
     });
 
     // set content type to image MIME type
-    res.set("Content-Type", downloadStream.file.contentType
-    );
+    res.set("Content-Type", downloadStream.files.contentType);
 
     // create a buffer to store the image data
     let imageData = [];
@@ -242,20 +228,6 @@ app.get("/images/:name", async (req, res) => {
     return res.status(500).send({
       message: error.message,
     });
-  }
-});
-
-app.get("/shops/:apartments", async (req, res) => {
-  const apartments = req.params.apartments;
-  try {
-    const shopsList = await shops.find({ apartments });
-    if (shopsList.length === 0) {
-      res.status(404).json({ message: "no shops found" });
-    } else {
-      res.status(200).send(shopsList);
-    }
-  } catch (e) {
-    res.status(500).send();
   }
 });
 

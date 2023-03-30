@@ -137,19 +137,6 @@ app.get("/seller/:email", async (req, res) => {
   }
 });
 
-app.get("/user/:email", async (req, res) => {
-  const email = req.params.email;
-  try {
-    const user = await users.findOne({ email });
-    if (!user) {
-      res.status(404).send({ message: "No user found" });
-    } else {
-      res.status(200).send(user);
-    }
-  } catch (e) {
-    res.status(500).send({ message: "No user found" });
-  }
-});
 //api code for perticular shop's products
 app.get("/product/:shopName", async (req, res) => {
   const shopName = req.params.shopName;
@@ -166,35 +153,6 @@ app.get("/product/:shopName", async (req, res) => {
 });
 
 //api code for download the images 
-// app.get("/images/:name", async (req, res) => {
-//   try {
-//     await mongoClient.connect();
-
-//     const database = mongoClient.db("test");
-//     const bucket = new GridFSBucket(database, {
-//       bucketName: "photos",
-//     });
-
-//     let downloadStream = bucket.openDownloadStreamByName(req.params.name);
-
-//     downloadStream.on("data", function (data) {
-//       return res.status(200).write(data);
-//     });
-
-//     downloadStream.on("error", function (err) {
-//       return res.status(404).send({ message: "Cannot download the Image!" });
-//     });
-
-//     downloadStream.on("end", () => {
-//       return res.end();
-//     });
-//   } catch (error) {
-//     return res.status(500).send({
-//       message: error.message,
-//     });
-//   }
-// });
-
 app.get("/images/:name", async (req, res) => {
   try {
     await mongoClient.connect();
@@ -206,6 +164,10 @@ app.get("/images/:name", async (req, res) => {
 
     let downloadStream = bucket.openDownloadStreamByName(req.params.name);
 
+    downloadStream.on("data", function (data) {
+      return res.status(200).write(data);
+    });
+
     downloadStream.on("error", function (err) {
       return res.status(404).send({ message: "Cannot download the Image!" });
     });
@@ -213,52 +175,12 @@ app.get("/images/:name", async (req, res) => {
     downloadStream.on("end", () => {
       return res.end();
     });
-
-    // set content type to image MIME type
-    res.set("Content-Type", downloadStream.file.contentType
-    );
-
-    // create a buffer to store the image data
-    let imageData = [];
-
-    downloadStream.on("data", function (chunk) {
-      imageData.push(chunk);
-    });
-
-    downloadStream.on("end", function () {
-      // concatenate the image data into a single buffer
-      imageData = Buffer.concat(imageData);
-
-      // encode the image data as a base64 string
-      const base64Image = imageData.toString("base64");
-
-      // create an HTML img tag with the base64-encoded image data
-      const imgTag = `data:${downloadStream.file.contentType};base64,${base64Image}`;
-
-      // send the HTML img tag as the response
-      res.send(imgTag);
-    });
   } catch (error) {
     return res.status(500).send({
       message: error.message,
     });
   }
 });
-
-app.get("/shops/:apartments", async (req, res) => {
-  const apartments = req.params.apartments;
-  try {
-    const shopsList = await shops.find({ apartments });
-    if (shopsList.length === 0) {
-      res.status(404).json({ message: "no shops found" });
-    } else {
-      res.status(200).send(shopsList);
-    }
-  } catch (e) {
-    res.status(500).send();
-  }
-});
-
 
 app.listen(port, () => {
   console.log(`connection is live on ${port}`);
