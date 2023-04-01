@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema({
+  apartments: {
+    type: String,
+    required: true,
+  },
   shopName: {
     type: String,
     required: true,

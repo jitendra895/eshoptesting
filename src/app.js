@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, "../build")));
 
-//api code for seller signup 
+//api code for seller signup
 app.post("/sellerSignup", async (req, res) => {
   try {
     const updateNewSeller = new sellers(req.body);
@@ -32,7 +32,7 @@ app.post("/sellerSignup", async (req, res) => {
   }
 });
 
-//api code for user signup 
+//api code for user signup
 app.post("/userSingup", async (req, res) => {
   try {
     const updateNewUser = new users(req.body);
@@ -62,7 +62,6 @@ app.post("/shop", async (req, res) => {
     res.status(400).json({ status: "error", message: e.message });
   }
 });
-
 
 //api code for seller Login
 app.post("/sellerLogin", async (req, res) => {
@@ -98,13 +97,19 @@ app.post("/userLogin", async (req, res) => {
   }
 });
 
-
 //api code for adding products
 app.post("/products", async (req, res) => {
   try {
     await upload(req, res);
-    const imageUrl = baseUrl + req.file.filename;
+    const imageUrl =
+      req.protocol +
+      "://" +
+      req.get("host") +
+      "/images/" +
+      req.file.filename;
+    // const imageUrl = baseUrl + req.file.filename;
     let imageUploadObject = {
+      apartments:req.body.apartments,
       image: imageUrl,
       shopName: req.body.shopName,
       productName: req.body.productName,
@@ -165,7 +170,7 @@ app.get("/product/:shopName", async (req, res) => {
   }
 });
 
-//api code for download the images 
+//api code for download the images
 app.get("/images/:name", async (req, res) => {
   try {
     await mongoClient.connect();
@@ -195,8 +200,6 @@ app.get("/images/:name", async (req, res) => {
   }
 });
 
-
-
 app.get("/shops/:apartments", async (req, res) => {
   const apartments = req.params.apartments;
   try {
@@ -210,7 +213,6 @@ app.get("/shops/:apartments", async (req, res) => {
     res.status(500).send();
   }
 });
-
 
 app.listen(port, () => {
   console.log(`connection is live on ${port}`);
