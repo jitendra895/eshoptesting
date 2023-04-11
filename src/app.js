@@ -12,7 +12,6 @@ const MongoClient = require("mongodb").MongoClient;
 const upload = require("./middleware/upload");
 const url =
   "mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority";
-const baseUrl = "http://localhost:4000/images/";
 const mongoClient = new MongoClient(url);
 const GridFSBucket = require("mongodb").GridFSBucket;
 
@@ -107,7 +106,6 @@ app.post("/products", async (req, res) => {
       req.get("host") +
       "/images/" +
       req.file.filename;
-    // const imageUrl = baseUrl + req.file.filename;
     let imageUploadObject = {
       apartments:req.body.apartments,
       image: imageUrl,
@@ -155,11 +153,27 @@ app.get("/user/:email", async (req, res) => {
     res.status(500).send({ message: "No user found" });
   }
 });
+
+//api code for perticular shop's products
+app.get("/productby/:apartments", async (req, res) => {
+  const apartments = req.params.apartments;
+  try {
+    const productsList = await products.find({ apartments });
+    if (productsList.length === 0) {
+      res.status(404).json({ message: "no products found" });
+    } else {
+      res.status(200).send(productsList);
+    }
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
 //api code for perticular shop's products
 app.get("/product/:shopName", async (req, res) => {
-  const shopName = req.params.shopName;
+  const shopName = req.params.shopName.trim().toLowerCase();
   try {
-    const productsList = await products.find({ shopName });
+    const productsList = await products.find({ shopName: { $regex: shopName,} });
     if (productsList.length === 0) {
       res.status(404).json({ message: "no products found" });
     } else {
@@ -208,6 +222,34 @@ app.get("/shops/:apartments", async (req, res) => {
       res.status(404).json({ message: "no shops found" });
     } else {
       res.status(200).send(shopsList);
+    }
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
+app.get("/shopsBy/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const shop = await shops.findOne({ _id: id });
+    if (!shop) {
+      res.status(404).json({ message: "Shop not found" });
+    } else {
+      res.status(200).send(shop);
+    }
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
+app.get("/shops", async (req, res) => {
+ 
+  try {
+    const shop = await shops.find({});
+    if (!shop) {
+      res.status(404).json({ message: "Shop not found" });
+    } else {
+      res.status(200).send(shop);
     }
   } catch (e) {
     res.status(500).send();
