@@ -11,10 +11,21 @@ const products = require("./models/products");
 const MongoClient = require("mongodb").MongoClient;
 const { ObjectId } = require("mongodb");
 const upload = require("./middleware/upload");
+const mongoose = require("mongoose");
 const url =
   "mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority";
 const mongoClient = new MongoClient(url);
 const GridFSBucket = require("mongodb").GridFSBucket;
+const connect = mongoose.createConnection(url, { useNewUrlParser: true, useUnifiedTopology: true });
+let gfs;
+
+connect.once('open', () => {
+    // initialize stream
+    gfs = new mongoose.mongo.GridFSBucket(connect.db, {
+        bucketName: "photos"
+    });
+});
+
 
 app.use(express.json());
 app.use(cors());
@@ -102,13 +113,9 @@ app.post("/products", async (req, res) => {
   try {
     await upload(req, res);
     const imageUrl =
-      req.protocol +
-      "://" +
-      req.get("host") +
-      "/images/" +
-      req.file.filename;
+      req.protocol + "://" + req.get("host") + "/images/" + req.file.filename;
     let imageUploadObject = {
-      apartments:req.body.apartments,
+      apartments: req.body.apartments,
       image: imageUrl,
       shopName: req.body.shopName,
       productName: req.body.productName,
@@ -174,7 +181,9 @@ app.get("/productby/:apartments", async (req, res) => {
 app.get("/product/:shopName", async (req, res) => {
   const shopName = req.params.shopName.trim().toLowerCase();
   try {
-    const productsList = await products.find({ shopName: { $regex: shopName,} });
+    const productsList = await products.find({
+      shopName: { $regex: shopName },
+    });
     if (productsList.length === 0) {
       res.status(404).json({ message: "no products found" });
     } else {
@@ -215,6 +224,34 @@ app.get("/images/:name", async (req, res) => {
   }
 });
 
+app.get("/imagesById/:filename", async (req, res) => {
+  gfs.find({ filename: req.params.filename }).toArray((err, files) => {
+    if (!files[0] || files.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "No files available",
+      });
+    }
+
+    if (
+      files[0].contentType === "image/jpeg" ||
+      files[0].contentType === "image/png" ||
+      files[0].contentType === "image/svg+xml"
+    ) {
+      // render image to browser
+      gfs.openDownloadStreamByName(req.params.filename).pipe(res);
+    } else {
+      res.status(404).json({
+        err: "Not an image",
+      });
+    }
+  });
+});
+
+// imageRouter.route("/image/:filename").get((req, res, next) => {
+  
+// });
+
 app.get("/shops/:apartments", async (req, res) => {
   const apartments = req.params.apartments;
   try {
@@ -244,7 +281,6 @@ app.get("/shopsBy/:id", async (req, res) => {
 });
 
 app.get("/shops", async (req, res) => {
- 
   try {
     const shop = await shops.find({});
     if (!shop) {
@@ -256,39 +292,6 @@ app.get("/shops", async (req, res) => {
     res.status(500).send();
   }
 });
-
-// const { ObjectId } = require("mongodb");
-
-app.get("/imagesById/:id", async (req, res) => {
-  try {
-    await mongoClient.connect();
-
-    const database = mongoClient.db("test");
-    const bucket = new GridFSBucket(database, {
-      bucketName: "photos",
-    });
-
-    let downloadStream = bucket.openDownloadStream(new ObjectId(req.params.id));
-
-    downloadStream.on("data", function (data) {
-      return res.status(200).write(data);
-    });
-
-    downloadStream.on("error", function (err) {
-      return res.status(404).send({ message: "Cannot download the Image!" });
-    });
-
-    downloadStream.on("end", () => {
-      return res.end();
-    });
-  } catch (error) {
-    return res.status(500).send({
-      message: error.message,
-    });
-  }
-});
-
-
 
 app.listen(port, () => {
   console.log(`connection is live on ${port}`);
