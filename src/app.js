@@ -9,6 +9,7 @@ const sellers = require("./models/sellers");
 const shops = require("./models/shops");
 const products = require("./models/products");
 const MongoClient = require("mongodb").MongoClient;
+const { ObjectId } = require("mongodb");
 const upload = require("./middleware/upload");
 const url =
   "mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority";
@@ -255,6 +256,39 @@ app.get("/shops", async (req, res) => {
     res.status(500).send();
   }
 });
+
+// const { ObjectId } = require("mongodb");
+
+app.get("/imagesById/:id", async (req, res) => {
+  try {
+    await mongoClient.connect();
+
+    const database = mongoClient.db("test");
+    const bucket = new GridFSBucket(database, {
+      bucketName: "photos",
+    });
+
+    let downloadStream = bucket.openDownloadStream(new ObjectId(req.params.id));
+
+    downloadStream.on("data", function (data) {
+      return res.status(200).write(data);
+    });
+
+    downloadStream.on("error", function (err) {
+      return res.status(404).send({ message: "Cannot download the Image!" });
+    });
+
+    downloadStream.on("end", () => {
+      return res.end();
+    });
+  } catch (error) {
+    return res.status(500).send({
+      message: error.message,
+    });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`connection is live on ${port}`);
