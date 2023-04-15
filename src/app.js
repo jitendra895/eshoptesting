@@ -9,11 +9,10 @@ const sellers = require("./models/sellers");
 const shops = require("./models/shops");
 const products = require("./models/products");
 const MongoClient = require("mongodb").MongoClient;
-const { ObjectId } = require("mongodb");
 const upload = require("./middleware/upload");
 const mongoose = require("mongoose");
 const url =
-  "mongodb+srv://jitendra:Welcome%401@atlascluster.qicyewo.mongodb.net/?retryWrites=true&w=majority";
+  "mongodb+srv://jbpinfosolution:welcome123@cluster0.2sqo6xo.mongodb.net/?retryWrites=true&w=majority";
 const mongoClient = new MongoClient(url);
 const GridFSBucket = require("mongodb").GridFSBucket;
 const connect = mongoose.createConnection(url, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -111,20 +110,7 @@ app.post("/userLogin", async (req, res) => {
 //api code for adding products
 app.post("/products", async (req, res) => {
   try {
-    await upload(req, res);
-    const imageUrl =
-      req.protocol + "://" + req.get("host") + "/images/" + req.file.filename;
-    let imageUploadObject = {
-      apartments: req.body.apartments,
-      image: imageUrl,
-      shopName: req.body.shopName,
-      productName: req.body.productName,
-      price: req.body.price,
-      quantity: req.body.quantity,
-      description: req.body.description,
-      others: req.body.others,
-    };
-    const uploadObject = new products(imageUploadObject);
+    const uploadObject = new products(req.body);
     const uploadProcess = await uploadObject.save();
     res.status(200).send(uploadProcess);
   } catch (error) {
@@ -224,33 +210,6 @@ app.get("/images/:name", async (req, res) => {
   }
 });
 
-app.get("/imagesById/:filename", async (req, res) => {
-  gfs.find({ filename: req.params.filename }).toArray((err, files) => {
-    if (!files[0] || files.length === 0) {
-      return res.status(200).json({
-        success: false,
-        message: "No files available",
-      });
-    }
-
-    if (
-      files[0].contentType === "image/jpeg" ||
-      files[0].contentType === "image/png" ||
-      files[0].contentType === "image/svg+xml"
-    ) {
-      // render image to browser
-      gfs.openDownloadStreamByName(req.params.filename).pipe(res);
-    } else {
-      res.status(404).json({
-        err: "Not an image",
-      });
-    }
-  });
-});
-
-// imageRouter.route("/image/:filename").get((req, res, next) => {
-  
-// });
 
 app.get("/shops/:apartments", async (req, res) => {
   const apartments = req.params.apartments;
