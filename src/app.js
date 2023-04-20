@@ -239,6 +239,38 @@ app.get("/shopsBy/:id", async (req, res) => {
   }
 });
 
+app.get("/productDetails/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const product = await products.findOne({ _id: id });
+    if (!product) {
+      res.status(404).json({ message: "product not found" });
+    } else {
+      res.status(200).send(product);
+    }
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
+app.put('/productUpdate/:id', function(req, res){
+  const id = req.params.id;
+  products.findByIdAndUpdate(id, req.body, {new: true}, function(err, product){
+    if (err) throw err;
+    res.status(200).send(product);
+  });
+});
+
+
+app.delete("/productDelete/:id", async (req, res) => {
+  try {
+    const deleteProduct = await products.deleteOne({ _id: req.params.id });
+    res.status(200).send(deleteProduct);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 app.get("/shops", async (req, res) => {
   try {
     const shop = await shops.find({});
