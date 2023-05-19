@@ -12,12 +12,21 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
+    // unique: true,
   },
   password: {
     type: String,
     required: true,
   },
+  flatNo:{
+    type :String,
+    required: true,
+  },
+  phoneNumber:{
+    type: String,
+    required: true,
+    unique: true,
+  }
 });
 
 const users = new mongoose.model("Users", userSchema);

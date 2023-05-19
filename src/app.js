@@ -15,16 +15,18 @@ const url =
   "mongodb+srv://jbpinfosolution:welcome123@cluster0.2sqo6xo.mongodb.net/?retryWrites=true&w=majority";
 const mongoClient = new MongoClient(url);
 const GridFSBucket = require("mongodb").GridFSBucket;
-const connect = mongoose.createConnection(url, { useNewUrlParser: true, useUnifiedTopology: true });
+const connect = mongoose.createConnection(url, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 let gfs;
 
-connect.once('open', () => {
-    // initialize stream
-    gfs = new mongoose.mongo.GridFSBucket(connect.db, {
-        bucketName: "photos"
-    });
+connect.once("open", () => {
+  // initialize stream
+  gfs = new mongoose.mongo.GridFSBucket(connect.db, {
+    bucketName: "photos",
+  });
 });
-
 
 app.use(express.json());
 app.use(cors());
@@ -76,14 +78,14 @@ app.post("/shop", async (req, res) => {
 //api code for seller Login
 app.post("/sellerLogin", async (req, res) => {
   try {
-    const user = await sellers.findOne({ email: req.body.email });
+    const user = await sellers.findOne({ phoneNumber: req.body.phoneNumber });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (req.body.password !== user.password) {
-      return res.status(400).json({ message: "Invalid password" });
-    }
-    res.status(200).json({ message: "Login successful" });
+    // if (req.body.password !== user.password) {
+    //   return res.status(400).json({ message: "Invalid password" });
+    // }
+    res.status(200).send(user._id);
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
@@ -92,16 +94,14 @@ app.post("/sellerLogin", async (req, res) => {
 //api code for user Login
 app.post("/userLogin", async (req, res) => {
   try {
-    const user = await users.findOne({ email: req.body.email });
+    const user = await users.findOne({ phoneNumber: req.body.phoneNumber });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    if (req.body.password !== user.password) {
-      return res.status(400).json({ message: "Invalid password" });
-    }
-
-    res.status(200).json({ message: "Login successful" });
+    // if (req.body.password !== user.password) {
+    //   return res.status(400).json({ message: "Invalid password" });
+    // }
+    res.status(200).send(user._id);
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
@@ -120,10 +120,10 @@ app.post("/products", async (req, res) => {
 });
 
 //api code for seller details
-app.get("/seller/:email", async (req, res) => {
-  const email = req.params.email;
+app.get("/seller/:id", async (req, res) => {
+  const { id } = req.params;
   try {
-    const user = await sellers.findOne({ email });
+    const user = await sellers.findOne({ _id: id });
     if (!user) {
       res.status(404).send();
     } else {
@@ -134,10 +134,10 @@ app.get("/seller/:email", async (req, res) => {
   }
 });
 
-app.get("/user/:email", async (req, res) => {
-  const email = req.params.email;
+app.get("/user/:id", async (req, res) => {
+  const { id } = req.params;
   try {
-    const user = await users.findOne({ email });
+    const user = await users.findOne({ _id: id });
     if (!user) {
       res.status(404).send({ message: "No user found" });
     } else {
@@ -210,7 +210,6 @@ app.get("/images/:name", async (req, res) => {
   }
 });
 
-
 app.get("/shops/:apartments", async (req, res) => {
   const apartments = req.params.apartments;
   try {
@@ -253,14 +252,18 @@ app.get("/productDetails/:id", async (req, res) => {
   }
 });
 
-app.put('/productUpdate/:id', function(req, res){
+app.put("/productUpdate/:id", function (req, res) {
   const id = req.params.id;
-  products.findByIdAndUpdate(id, req.body, {new: true}, function(err, product){
-    if (err) throw err;
-    res.status(200).send(product);
-  });
+  products.findByIdAndUpdate(
+    id,
+    req.body,
+    { new: true },
+    function (err, product) {
+      if (err) throw err;
+      res.status(200).send(product);
+    }
+  );
 });
-
 
 app.delete("/productDelete/:id", async (req, res) => {
   try {
